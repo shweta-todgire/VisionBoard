@@ -1,20 +1,22 @@
-<<<<<<< HEAD
-# React + Vite
+# Vision Board
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite application to create a Vision Board with images, text, and stickers.
 
-Currently, two official plugins are available:
+## Features
+- Add images from files
+- Add text with styling (size, color, bold, underline)
+- Add stickers from preloaded images
+- Drag, resize, and rotate elements
+- Download board as PNG
+- Change background color
+- Clear board
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Live Demo
+[https://shweta-todgire.github.io/VisionBoard](https://shweta-todgire.github.io/VisionBoard)
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
-# VisionBoard
->>>>>>> 1121fd6aa15ad4b08a64729a02fab018fa1e0b36
+npm install
+npm run dev       # Run locally
+npm run build     # Build for production
+npm run deploy    # Deploy to GitHub Pages
