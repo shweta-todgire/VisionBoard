@@ -17,6 +17,9 @@ A React + Vite application to create a Vision Board with images, text, and stick
 ## Setup
 
 npm install
+
 npm run dev       # Run locally
+
 npm run build     # Build for production
+
 npm run deploy    # Deploy to GitHub Pages
