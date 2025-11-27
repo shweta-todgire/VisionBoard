@@ -1,13 +1,13 @@
 import React, { useState, useRef } from "react";
 import { Rnd } from "react-rnd";
+import { useGesture } from "@use-gesture/react";
 import html2canvas from "html2canvas";
 import "./App.css";
 
-/* AUTO LOAD STICKERS FROM src/images (Vite compatible) */
+/* AUTO LOAD STICKERS FROM src/images */
 const stickers = Object.values(
   import.meta.glob("./images/*.{png,jpg,jpeg,svg}", { eager: true })
 ).map((m) => m.default);
-
 
 export default function App() {
   const [items, setItems] = useState([]);
@@ -23,6 +23,10 @@ export default function App() {
 
   const canvasRef = useRef();
 
+  /* UPDATE ITEM */
+  const updateItem = (id, data) =>
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...data } : i)));
+
   /* ADD IMAGE */
   const addImage = (e) => {
     const file = e.target.files[0];
@@ -30,18 +34,17 @@ export default function App() {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
+      const maxWidth = canvasRef.current.offsetWidth * 0.6;
+      const maxHeight = canvasRef.current.offsetHeight * 0.6;
+      let width = img.width;
+      let height = img.height;
+      const scale = Math.min(maxWidth / width, maxHeight / height, 1);
+      width *= scale;
+      height *= scale;
+
       setItems((prev) => [
         ...prev,
-        {
-          id: Date.now(),
-          type: "image",
-          url,
-          width: img.width * 0.5,
-          height: img.height * 0.5,
-          x: 60,
-          y: 60,
-          borderRadius: 10,
-        },
+        { id: Date.now(), type: "image", url, width, height, x: 20, y: 20, borderRadius: 10 },
       ]);
     };
     img.src = url;
@@ -82,22 +85,9 @@ export default function App() {
   const addSticker = (s) => {
     setItems((prev) => [
       ...prev,
-      {
-        id: Date.now(),
-        type: "image",
-        url: s,
-        width: 160,
-        height: 160,
-        x: 80,
-        y: 80,
-        borderRadius: 10,
-      },
+      { id: Date.now(), type: "image", url: s, width: 160, height: 160, x: 80, y: 80, borderRadius: 10 },
     ]);
     setShowStickerModal(false);
-  };
-
-  const updateItem = (id, data) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...data } : i)));
   };
 
   /* DOWNLOAD BOARD */
@@ -110,20 +100,52 @@ export default function App() {
     });
   };
 
+  /* TAP TO CHANGE RADIUS */
+  const handleImageClick = (item) => {
+    const radii = [10, 0, "50%"];
+    const current = item.borderRadius ?? 10;
+    const currentIndex = radii.findIndex((r) => r === current);
+    const next = radii[(currentIndex + 1) % radii.length];
+    updateItem(item.id, { borderRadius: next });
+  };
 
-const handleImageClick = (item) => {
-  const radii = [10, 0, "50%"]; 
-  const current = item.borderRadius ?? 10;
-  const currentIndex = radii.findIndex(r => r === current);
-  const next = radii[(currentIndex + 1) % radii.length];
-  updateItem(item.id, { borderRadius: next });
-};
+  /* MOBILE DRAG & PINCH HOOK */
+  const MobileImage = ({ item }) => {
+    const bind = useGesture({
+      onDrag: ({ offset: [x, y] }) => updateItem(item.id, { x, y }),
+      onPinch: ({ da: [d] }) => {
+        const newWidth = Math.max(50, item.width * (1 + d / 200));
+        const newHeight = Math.max(50, item.height * (1 + d / 200));
+        updateItem(item.id, { width: newWidth, height: newHeight });
+      },
+    });
 
+    return (
+      <div
+        {...bind()}
+        style={{
+          position: "absolute",
+          width: item.width,
+          height: item.height,
+          top: item.y,
+          left: item.x,
+          touchAction: "none",
+        }}
+      >
+        <img
+          src={item.url}
+          alt=""
+          style={{ width: "100%", height: "100%", borderRadius: item.borderRadius }}
+          onTouchEnd={() => handleImageClick(item)}
+        />
+      </div>
+    );
+  };
 
+  const isMobile = window.innerWidth < 768;
 
   return (
     <div className="layout">
-      {/* LEFT PANEL */}
       <div className="left">
         <h1 className="title">Vision Board</h1>
         <label className="btn imageBtn">
@@ -134,7 +156,6 @@ const handleImageClick = (item) => {
         <button className="btn stickerBtn" onClick={() => setShowStickerModal(true)}>Add Stickers</button>
         <button className="btn downloadBtn" onClick={download}>Download</button>
 
-        {/* BACKGROUND COLOR PICKER */}
         <label className="btn bgBtn">
           Change Background
           <input
@@ -148,18 +169,19 @@ const handleImageClick = (item) => {
         <button className="btn clearBtn" onClick={() => setItems([])}>Clear</button>
       </div>
 
-      {/* CANVAS */}
       <div className="canvasContainer">
         <div className="canvas" ref={canvasRef} style={{ background: canvasBg }}>
           {items.map((item) => {
             if (item.type === "image") {
-              return (
+              return isMobile ? (
+                <MobileImage key={item.id} item={item} />
+              ) : (
                 <Rnd
                   key={item.id}
                   bounds="parent"
                   size={{ width: item.width, height: item.height }}
                   position={{ x: item.x, y: item.y }}
-                  enableResizing={true}
+                  enableResizing
                   onDragStop={(e, d) => updateItem(item.id, { x: d.x, y: d.y })}
                   onResizeStop={(e, dir, ref, delta, pos) =>
                     updateItem(item.id, { width: ref.offsetWidth, height: ref.offsetHeight, x: pos.x, y: pos.y })
@@ -181,7 +203,7 @@ const handleImageClick = (item) => {
                   bounds="parent"
                   size={{ width: item.width, height: item.height }}
                   position={{ x: item.x, y: item.y }}
-                  enableResizing={true}
+                  enableResizing
                   onDragStop={(e, d) => updateItem(item.id, { x: d.x, y: d.y })}
                   onResizeStop={(e, dir, ref, delta, pos) =>
                     updateItem(item.id, { width: ref.offsetWidth, height: ref.offsetHeight, x: pos.x, y: pos.y })
@@ -221,7 +243,7 @@ const handleImageClick = (item) => {
         </div>
       </div>
 
-      {/* TEXT MODAL */}
+      {/* Text Modal */}
       {showTextModal && (
         <div className="modalBg">
           <div className="modalCard">
@@ -231,7 +253,6 @@ const handleImageClick = (item) => {
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
             />
-
             <label>Font Size</label>
             <input
               type="number"
@@ -240,15 +261,12 @@ const handleImageClick = (item) => {
               value={size}
               onChange={(e) => setSize(Number(e.target.value))}
             />
-
             <label>Color</label>
             <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-
             <div className="formatRow">
               <button onClick={() => setBold(!bold)} className={bold ? "activeFmt" : ""}>B</button>
               <button onClick={() => setUnderline(!underline)} className={underline ? "activeFmt" : ""}>U</button>
             </div>
-
             <div className="modalBtnRow">
               <button className="modalBtn" onClick={createText}>Add</button>
               <button className="closeBtn" onClick={() => setShowTextModal(false)}>Close</button>
@@ -257,7 +275,7 @@ const handleImageClick = (item) => {
         </div>
       )}
 
-      {/* STICKER MODAL */}
+      {/* Sticker Modal */}
       {showStickerModal && (
         <div className="modalBg">
           <div className="modalCard">
