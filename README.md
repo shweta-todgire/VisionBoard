@@ -14,8 +14,7 @@ A React + Vite application to create a Vision Board with images, text, and stick
 ## Live Demo
 [https://shweta-todgire.github.io/VisionBoard](https://shweta-todgire.github.io/VisionBoard)
 
-##If you are using your phone, to resize the image or sticker tap on it and then try to resize it from an edges of the image
-
+##Use Laptop for Better Experience
 ## Setup
 
 npm install
